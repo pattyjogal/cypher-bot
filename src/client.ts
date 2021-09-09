@@ -19,16 +19,27 @@ export default (db: Db) => {
             const pronouns = interaction.options.getString("pronouns");
             const result = await db.collection("members").insertOne({
               gameTag,
-              pronouns
+              pronouns,
             });
 
             if (!result) {
-              interaction.reply("Failed to register.");
+              interaction.reply({
+                content: "Ah, my eyes are down. I couldn't register you; check with an admin.",
+                ephemeral: true,
+              });
             } else {
-              interaction.reply("Registered! Feel free to update with /register update");
+              interaction.reply({
+                content:
+                  "I know **exactly** who you are; you're registered! Feel free to update with /register update",
+                ephemeral: true,
+              });
+              const user = interaction.user;
+              const role = interaction.guild.roles.cache.find(
+                (role) => role.name === "Valorant"
+              );
+              interaction.guild.members.cache.get(user.id).roles.add(role);
             }
         }
-        await interaction.reply("pong");
         break;
     }
   });

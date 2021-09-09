@@ -40,7 +40,7 @@ const rest = new REST({ version: "9" }).setToken(process.env.CYPHER_BOT_TOKEN);
     console.log("Started refreshing application (/) commands.");
 
     await rest.put(
-      Routes.applicationGuildCommands(CLIENT_ID, "725570244256464896"),
+      Routes.applicationGuildCommands(CLIENT_ID, "883070542536650824"),
       {
         body: commands,
       }
