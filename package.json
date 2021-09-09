@@ -1,0 +1,21 @@
+{
+  "name": "cypher-bot",
+  "version": "1.0.0",
+  "description": "A Valorant Discord bot for tracking player info",
+  "main": "src/index.ts",
+  "author": "Patrick Gallagher",
+  "license": "MIT",
+  "dependencies": {
+    "@discordjs/rest": "^0.1.0-canary.0",
+    "discord-api-types": "^0.23.1",
+    "discord.js": "^13.1.0",
+    "mongodb": "^4.1.1"
+  },
+  "scripts": {
+    "start": "ts-node src/index.ts"
+  },
+  "devDependencies": {
+    "ts-node": "^10.2.1",
+    "typescript": "^4.4.2"
+  }
+}
