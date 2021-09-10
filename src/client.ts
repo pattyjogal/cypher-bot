@@ -13,7 +13,7 @@ export default (db: Db) => {
     switch (interaction.commandName) {
       case "register":
         switch (interaction.options.getSubcommand()) {
-          case "new":
+          case "new": {
             const gameTag = interaction.options.getString("val_id");
             const pronouns = interaction.options.getString("pronouns");
             const result = await db.collection("members").insertOne({
@@ -24,7 +24,8 @@ export default (db: Db) => {
 
             if (!result) {
               interaction.reply({
-                content: "Ah, my eyes are down. I couldn't register you; check with an admin.",
+                content:
+                  "Ah, my eyes are down. I couldn't register you; check with an admin.",
                 ephemeral: true,
               });
             } else {
@@ -39,6 +40,40 @@ export default (db: Db) => {
               );
               interaction.guild.members.cache.get(user.id).roles.add(role);
             }
+          }
+          case "update": {
+            const gameTag = interaction.options.getString("val_id") || undefined;
+            const pronouns = interaction.options.getString("pronouns") || undefined;
+            console.log({
+              gameTag,
+              pronouns,
+            });
+            const result = await db.collection("members").updateOne(
+              {
+                discordId: interaction.user.id,
+              },
+              {
+                $set: {
+                  gameTag,
+                  pronouns,
+                },
+              }
+            );
+
+            if (!result) {
+              interaction.reply({
+                content:
+                  "They found my wire... I couldn't update you; check with an admin.",
+                ephemeral: true,
+              });
+            } else {
+              interaction.reply({
+                content:
+                  "Caught one; you've been updated! Feel free to update again with /register update",
+                ephemeral: true,
+              });
+            }
+          }
         }
         break;
     }

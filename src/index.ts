@@ -29,6 +29,25 @@ const commands = [
           },
         ]
       },
+      {
+        name: "update",
+        description: "Updates your info",
+        type: ApplicationCommandOptionType.Subcommand,
+        options: [
+          {
+            name: "val_id",
+            description: "Your new in-game Valorant ID",
+            type: ApplicationCommandOptionType.String,
+            required: false,
+          },
+          {
+            name: "pronouns",
+            description: "Your new preferred third-person pronouns (used by casters)",
+            type: ApplicationCommandOptionType.String,
+            required: false,
+          },
+        ]
+      }
     ],
   },
 ];
@@ -58,7 +77,9 @@ const rest = new REST({ version: "9" }).setToken(process.env.CYPHER_BOT_TOKEN);
 
 // DB Setup
 async function setupDB() {
-  const client = await MongoClient.connect(process.env.DB_CONN_STRING);
+  const client = await MongoClient.connect(process.env.DB_CONN_STRING, {
+    ignoreUndefined: true,
+  });
 
   await client.connect();
   return client.db(process.env.DB_NAME);
