@@ -10,7 +10,6 @@ export default (db: Db) => {
 
   client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand()) return;
-    console.log(interaction.options.getString(""));
     switch (interaction.commandName) {
       case "register":
         switch (interaction.options.getSubcommand()) {
