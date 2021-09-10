@@ -19,6 +19,7 @@ export default (db: Db) => {
             const result = await db.collection("members").insertOne({
               gameTag,
               pronouns,
+              discordId: interaction.user.id,
             });
 
             if (!result) {
