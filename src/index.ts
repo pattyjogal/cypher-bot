@@ -5,6 +5,10 @@ import client from "./client";
 
 const CLIENT_ID = "885286855275327518";
 
+const MOD_COMMANDS = [
+  "tenmans start"
+]
+
 const commands = [
   {
     name: "register",
@@ -50,6 +54,34 @@ const commands = [
       }
     ],
   },
+  {
+    name: "tenmans",
+    description: "Interacts with the 10mans lobby",
+    options: [
+      {
+        name: "join",
+        description: "Joins the 10mans lobby",
+        type: ApplicationCommandOptionType.Subcommand,
+      },
+      {
+        name: "leave",
+        description: "Leaves the 10mans lobby",
+        type: ApplicationCommandOptionType.Subcommand,
+      },
+      {
+        name: "start",
+        description: "Starts a 10mans queue",
+        type: ApplicationCommandOptionType.Subcommand,
+        options: [
+          {
+            name: "time",
+            description: "The time to start queue",
+            type: ApplicationCommandOptionType.String,
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 const rest = new REST({ version: "9" }).setToken(process.env.CYPHER_BOT_TOKEN);
