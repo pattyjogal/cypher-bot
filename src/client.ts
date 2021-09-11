@@ -110,6 +110,15 @@ export default (db: Db) => {
         const user = (await db.collection("members").findOne({
           discordId: interaction.user.id,
         })) as Member;
+
+        if (!user) {
+          interaction.reply({
+            content:
+              "Who are you? Copy of me?! You need to register with me before joining 10mans! Please visit #rules for more info.",
+            ephemeral: true,
+          });
+        }
+
         switch (interaction.options.getSubcommand()) {
           case "join":
             {
@@ -147,7 +156,7 @@ export default (db: Db) => {
               tenmansQueue.delete(user.gameTag);
               interaction.reply({
                 content:
-                  "This is no problem; You've been removed to the queue.",
+                  "This is no problem; You've been removed from the queue.",
                 ephemeral: true,
               });
 
