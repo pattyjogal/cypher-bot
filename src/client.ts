@@ -117,6 +117,8 @@ export default (db: Db) => {
               "Who are you? Copy of me?! You need to register with me before joining 10mans! Please visit #rules for more info.",
             ephemeral: true,
           });
+
+          return;
         }
 
         switch (interaction.options.getSubcommand()) {
