@@ -100,7 +100,7 @@ async function cmd_tenmans(interaction, db: Db) {
 
     // Wrap function call to pass same args to all methods
     const call_fn = commands[interaction.options.getSubcommand()];
-    call_fn(interaction, db);
+    call_fn(interaction, user, db);
 }
 
 const createEmbed = (time) =>
