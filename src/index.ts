@@ -76,6 +76,18 @@ const commands = [
             type: ApplicationCommandOptionType.String,
           }
         ]
+      },
+      {
+        name: "vote",
+        description: "Vote to start a 10mans lobby.",
+        type: ApplicationCommandOptionType.Subcommand,
+        options: [
+          {
+            name: "time",
+            description: "The time to start the queue",
+            type: ApplicationCommandOptionType.String
+          }
+        ]
       }
     ]
   }
