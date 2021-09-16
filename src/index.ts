@@ -3,11 +3,8 @@ import { Routes, ApplicationCommandOptionType } from "discord-api-types/v9";
 import { MongoClient } from "mongodb";
 import client from "./client";
 
-const CLIENT_ID = "885286855275327518";
-
-const MOD_COMMANDS = [
-  "tenmans start"
-]
+import * as dotenv from "dotenv";
+dotenv.config();
 
 const commands = [
   {
@@ -96,14 +93,14 @@ const commands = [
   }
 ];
 
-const rest = new REST({ version: "9" }).setToken(process.env.CYPHER_BOT_TOKEN);
+const rest = new REST({ version: "9" }).setToken(process.env.CYPHERBOT_TOKEN);
 
 (async () => {
   try {
     console.log("Started refreshing application (/) commands.");
 
     await rest.put(
-      Routes.applicationGuildCommands(CLIENT_ID, "725570244256464896"),
+      Routes.applicationGuildCommands(process.env.CYPHERBOT_CLIENT_ID, process.env.CYPHERBOT_TARGET_GUILD_ID),
       {
         body: commands,
       }
@@ -116,7 +113,7 @@ const rest = new REST({ version: "9" }).setToken(process.env.CYPHER_BOT_TOKEN);
 
   const db = await setupDB();
 
-  client(db).login(process.env.CYPHER_BOT_TOKEN);
+  client(db).login(process.env.CYPHERBOT_TOKEN);
 })();
 
 // DB Setup
