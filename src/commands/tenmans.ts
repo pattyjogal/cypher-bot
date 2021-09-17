@@ -92,7 +92,7 @@ class SubcommandTenmansStart extends MessageExecutable<CommandInteraction> {
     time = this.interaction.options.getString("time");
     tenmansQueue = [];
     const queueChannel = this.interaction.guild.channels.cache.get(
-      "887569137319149578"
+      "725570244256464896"
     ) as TextChannel;
 
     const queueId = "stub";
