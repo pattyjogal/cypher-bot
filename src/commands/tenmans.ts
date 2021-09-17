@@ -12,7 +12,7 @@ let tenmansQueue: Set<string> = new Set();
 let time: String | null;
 let activeTenmansMessage: Message | null;
 
-abstract class SubcommandTenmansQueue extends RegisteredUserSubcommand {
+abstract class TenmansQueueSubcommand extends RegisteredUserSubcommand {
   abstract updateQueue();
 
   afterUserExecute(): Promise<any> {
@@ -32,7 +32,7 @@ abstract class SubcommandTenmansQueue extends RegisteredUserSubcommand {
   }
 }
 
-class SubcommandTenmansJoin extends SubcommandTenmansQueue {
+class TenmansJoinSubcommand extends TenmansQueueSubcommand {
   updateQueue() {
     tenmansQueue.add(this.user.gameTag);
     this.interaction.reply({
@@ -42,7 +42,7 @@ class SubcommandTenmansJoin extends SubcommandTenmansQueue {
   }
 }
 
-class SubcommandTenmansLeave extends SubcommandTenmansQueue {
+class TenmansLeaveSubcommand extends TenmansQueueSubcommand {
   updateQueue() {
     tenmansQueue.delete(this.user.gameTag);
     this.interaction.reply({
@@ -52,7 +52,7 @@ class SubcommandTenmansLeave extends SubcommandTenmansQueue {
   }
 }
 
-class SubcommandTenmansStart extends Subcommand {
+class TenmansStartSubcommand extends Subcommand {
   async execute(): Promise<any> {
     const interaction_user = this.interaction.user;
     const role = this.interaction.guild.roles.cache.find(
@@ -88,9 +88,9 @@ async function cmd_tenmans(interaction, db: Db) {
       new (interaction: CommandInteraction, db: Db): Subcommand;
     };
   } = {
-    join: SubcommandTenmansJoin,
-    leave: SubcommandTenmansLeave,
-    start: SubcommandTenmansStart,
+    join: TenmansJoinSubcommand,
+    leave: TenmansLeaveSubcommand,
+    start: TenmansStartSubcommand,
   };
 
   // Wrap function call to pass same args to all methods
