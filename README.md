@@ -5,6 +5,7 @@ A Discord bot for managing Valorant community 10man queues and more!
 ## Development
 
 To develop locally, you will need
+
 - A MongoDB instance (local or online)
 - Yarn
 - A Discord server to test in
@@ -22,11 +23,15 @@ DB_CONN_STRING=mongodb+srv://<username>:<password>@<host>/<database>?retryWrites
 ```
 
 ### Getting Started
-You just need to install dependencies with 
+
+You just need to install dependencies with
+
 ```
 yarn install --prod false
 ```
+
 and start the server with
+
 ```
 yarn start
 ```
