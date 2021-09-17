@@ -56,16 +56,6 @@ const commands = [
     description: "Interacts with the 10mans lobby",
     options: [
       {
-        name: "join",
-        description: "Joins the 10mans lobby",
-        type: ApplicationCommandOptionType.Subcommand,
-      },
-      {
-        name: "leave",
-        description: "Leaves the 10mans lobby",
-        type: ApplicationCommandOptionType.Subcommand,
-      },
-      {
         name: "start",
         description: "Starts a 10mans queue",
         type: ApplicationCommandOptionType.Subcommand,
