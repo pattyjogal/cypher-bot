@@ -92,7 +92,7 @@ class SubcommandTenmansStart extends MessageExecutable<CommandInteraction> {
     time = this.interaction.options.getString("time");
     tenmansQueue = [];
     const queueChannel = this.interaction.guild.channels.cache.get(
-      "725570244256464896"
+      "885704092142428200"
     ) as TextChannel;
 
     const queueId = "stub";
@@ -118,6 +118,14 @@ export async function cmd_tenmans(interaction, db: Db) {
 
   // Wrap function call to pass same args to all methods
   const Action = commands[interaction.options.getSubcommand()];
+  if (Action === undefined) {
+    console.error("Bad action:", interaction.options.getSubcommand());
+    interaction.reply({
+      ephemeral: true,
+      content: "Error logged; please tell an admin what you were trying to do"
+    });
+    return;
+  }
   const command = new Action(interaction, db);
   command.execute();
 }
@@ -138,6 +146,14 @@ export async function handleButton(interaction: ButtonInteraction, db: Db) {
   const actionParts = interaction.customId.split(".");
   const [commandName, queueId] = actionParts[actionParts.length - 1].split(":");
   const Action = commands[commandName];
+  if (Action === undefined) {
+    console.error("Bad action:", interaction.customId);
+    interaction.reply({
+      ephemeral: true,
+      content: "Error logged; please tell an admin what you were trying to do"
+    });
+    return;
+  }
   const command = new Action(interaction, db, queueId);
   command.execute();
 }
