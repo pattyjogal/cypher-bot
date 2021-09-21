@@ -8,6 +8,7 @@ import {
   Constants,
   ButtonInteraction,
   Interaction,
+  GuildApplicationCommandManager,
 } from "discord.js";
 import { Db } from "mongodb";
 import Member from "../models/member";
@@ -104,6 +105,33 @@ class SubcommandTenmansStart extends MessageExecutable<CommandInteraction> {
   }
 }
 
+class TenmansCloseSubcommand extends MessageExecutable<CommandInteraction> {
+  async execute(): Promise<any> {
+    // Verify privilege
+    const interaction_user = this.interaction.user;
+    const role = this.interaction.guild.roles.cache.find(
+      (role) => role.name === "Admin"
+    );
+
+    if (
+      !this.interaction.guild.members.cache
+        .get(interaction_user.id)
+        .roles.cache.has(role.id)
+    ) {
+      this.interaction.reply({
+        content:
+          "You're not an admin, so you can't close the queue. Ask an admin to close it.",
+        ephemeral: true,
+      });
+      return;
+    }
+
+    // Teardown - clear current queue
+    tenmansQueue = []
+    await activeTenmansMessage.delete();
+  }
+}
+
 export async function cmd_tenmans(interaction, db: Db) {
   const commands: {
     [key: string]: {
@@ -114,6 +142,7 @@ export async function cmd_tenmans(interaction, db: Db) {
     };
   } = {
     start: SubcommandTenmansStart,
+    end: TenmansCloseSubcommand
   };
 
   // Wrap function call to pass same args to all methods
