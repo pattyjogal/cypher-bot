@@ -1,7 +1,9 @@
+import { CommandInteraction, Message } from "discord.js";
 import { Db } from "mongodb";
-import { Subcommand } from "./command";
 
-class NewSubcommand extends Subcommand {
+import { MessageExecutable } from "./command";
+
+class NewSubcommand extends MessageExecutable<CommandInteraction> {
     async execute() {
         const gameTag = this.interaction.options.getString("val_id");
         const pronouns = this.interaction.options.getString("pronouns");
@@ -9,7 +11,7 @@ class NewSubcommand extends Subcommand {
             discordId: this.interaction.user.id
         }).toArray();
 
-        // Exit in case data for a user already exists
+        // Exit if data for a user already exists
         if (existing_user.length > 0) {
             this.interaction.reply({
                 content:
@@ -46,7 +48,7 @@ class NewSubcommand extends Subcommand {
     }
 }
 
-class UpdateSubcommand extends Subcommand {
+class UpdateSubcommand extends MessageExecutable<CommandInteraction> {
     async execute() {
         const gameTag =
             this.interaction.options.getString("val_id") || undefined;
@@ -91,7 +93,7 @@ function cmd_register(interaction, db: Db) {
     };
 
     const call_fn = commands[interaction.options.getSubcommand()];
-    const subcmd: Subcommand = new call_fn(interaction, db);
+    const subcmd: MessageExecutable<CommandInteraction> = new call_fn(interaction, db);
     subcmd.execute();
 }
 
