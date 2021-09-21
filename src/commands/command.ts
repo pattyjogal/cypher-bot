@@ -1,14 +1,23 @@
-import { CommandInteraction } from "discord.js";
+import {
+  CommandInteraction,
+  MessageComponentInteraction,
+} from "discord.js";
 import { Db } from "mongodb";
 import Member from "../models/member";
 
-export abstract class Subcommand {
-  constructor(protected interaction: CommandInteraction, protected db: Db) {}
+export type RepliableInteraction =
+  | MessageComponentInteraction
+  | CommandInteraction;
+
+export abstract class MessageExecutable<T extends RepliableInteraction> {
+  constructor(protected interaction: T, protected db: Db) {}
 
   abstract execute(): Promise<any>;
 }
 
-export abstract class RegisteredUserSubcommand extends Subcommand {
+export abstract class RegisteredUserExecutable<
+  T extends RepliableInteraction
+> extends MessageExecutable<T> {
   protected user: Member;
 
   async execute(): Promise<any> {
