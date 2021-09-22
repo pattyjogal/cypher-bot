@@ -10,6 +10,7 @@ import {
   Interaction,
 } from "discord.js";
 import { Db } from "mongodb";
+import botConfig from "../config/botConfig";
 import Member from "../models/member";
 
 import {
@@ -91,9 +92,7 @@ class SubcommandTenmansStart extends MessageExecutable<CommandInteraction> {
     }
     time = this.interaction.options.getString("time");
     tenmansQueue = [];
-    const queueChannel = this.interaction.guild.channels.cache.get(
-      "885704092142428200"
-    ) as TextChannel;
+    const queueChannel = botConfig.queueMsgChannel as TextChannel;
 
     const queueId = "stub";
 
