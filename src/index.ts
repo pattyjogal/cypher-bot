@@ -88,7 +88,14 @@ const commands = [
       {
         name: "defaultChannel",
         description: "The channel to place queue embed messages",
-        type: ApplicationCommandOptionType.Channel
+        type: ApplicationCommandOptionType.Subcommand,
+        options: [
+          {
+            name: "channel",
+            description: "Channel to place messages",
+            type: ApplicationCommandOptionType.Channel
+          }
+        ]
       }
     ]
   }
