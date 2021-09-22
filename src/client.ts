@@ -7,6 +7,7 @@ import {
   cmd_tenmans,
   handleButton as tenmansHandleButton,
 } from "./commands/tenmans";
+import { cmdConfig } from "./commands/config";
 import botConfig from "./config/botConfig";
 
 async function initBotConfig (client: Client, db: Db) {
@@ -15,7 +16,7 @@ async function initBotConfig (client: Client, db: Db) {
     "configName": "bot"
   });
     
-  if (!!botConfigDoc) {
+  if (!botConfigDoc) {
     // Persist default configuration data
     const defaultChannelId = process.env.DEFAULT_QUEUEMSG_CHANNELID || "885704092142428200";
 
@@ -45,6 +46,7 @@ export default (db: Db) => {
       const actions = {
         register: cmd_register,
         tenmans: cmd_tenmans,
+        config: cmdConfig
       };
 
       // Use function table to pass context to specific command
