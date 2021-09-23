@@ -7,12 +7,12 @@ class NewSubcommand extends MessageExecutable<CommandInteraction> {
     async execute() {
         const gameTag = this.interaction.options.getString("val_id");
         const pronouns = this.interaction.options.getString("pronouns");
-        const existing_user = await this.db.collection("members").find({
+        const existingUser = await this.db.collection("members").findOne({
             discordId: this.interaction.user.id
-        }).toArray();
+        });
 
         // Exit if data for a user already exists
-        if (existing_user.length > 0) {
+        if (!!existingUser) {
             this.interaction.reply({
                 content:
                     "I already know **exactly** who you are. No need to register again, my friend!",
