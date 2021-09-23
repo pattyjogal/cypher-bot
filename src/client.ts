@@ -10,19 +10,20 @@ import {
 import { cmdConfig } from "./commands/config";
 import botConfig from "./config/botConfig";
 
-async function initBotConfig (client: Client, db: Db) {
+async function initBotConfig(client: Client, db: Db) {
   const botConfigCollection = db.collection("config");
   let botConfigDoc = await botConfigCollection.findOne({
-    "configName": "bot"
+    configName: "bot",
   });
-    
+
   if (!botConfigDoc) {
     // Persist default configuration data
-    const defaultChannelId = process.env.DEFAULT_QUEUEMSG_CHANNELID || "885704092142428200";
+    const defaultChannelId =
+      process.env.DEFAULT_QUEUEMSG_CHANNELID || "885704092142428200";
 
     botConfigDoc = await botConfigCollection.insertOne({
-      "configName": "bot",
-      "queueChannelId": defaultChannelId
+      configName: "bot",
+      queueChannelId: defaultChannelId,
     });
   }
 
@@ -35,7 +36,7 @@ export default (db: Db) => {
 
   client.on("ready", async () => {
     console.log(`Logged in as ${client.user.tag}!`);
-    
+
     console.log(`Loading configuration data from db...`);
     await initBotConfig(this, db);
     console.log(`Config successfully initialized.`);
@@ -46,7 +47,7 @@ export default (db: Db) => {
       const actions = {
         register: cmd_register,
         tenmans: cmd_tenmans,
-        config: cmdConfig
+        config: cmdConfig,
       };
 
       // Use function table to pass context to specific command
