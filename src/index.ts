@@ -68,6 +68,14 @@ const commands = [
         ]
       },
       {
+        name: "close",
+        description: "Closes a 10mans queue",
+        type: ApplicationCommandOptionType.Subcommand,
+        options: [
+          // TODO: Add an option for queue id after adding multi-queue support
+        ]
+      },
+      {
         name: "vote",
         description: "Vote to start a 10mans lobby.",
         type: ApplicationCommandOptionType.Subcommand,
