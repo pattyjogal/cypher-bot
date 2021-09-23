@@ -3,7 +3,7 @@ import { Db } from "mongodb";
 
 import { MessageExecutable } from "./command";
 
-class NewSubcommand extends MessageExecutable<CommandInteraction> {
+class NewUserSubcommand extends MessageExecutable<CommandInteraction> {
     async execute() {
         const gameTag = this.interaction.options.getString("val_id");
         const pronouns = this.interaction.options.getString("pronouns");
@@ -48,7 +48,7 @@ class NewSubcommand extends MessageExecutable<CommandInteraction> {
     }
 }
 
-class UpdateSubcommand extends MessageExecutable<CommandInteraction> {
+class UpdateUserSubcommand extends MessageExecutable<CommandInteraction> {
     async execute() {
         const gameTag =
             this.interaction.options.getString("val_id") || undefined;
@@ -88,12 +88,12 @@ class UpdateSubcommand extends MessageExecutable<CommandInteraction> {
 
 function cmd_register(interaction, db: Db) {
     const commands = {
-        "new": NewSubcommand,
-        "update": UpdateSubcommand
+        "new": NewUserSubcommand,
+        "update": UpdateUserSubcommand
     };
 
-    const call_fn = commands[interaction.options.getSubcommand()];
-    const subcmd: MessageExecutable<CommandInteraction> = new call_fn(interaction, db);
+    const Action = commands[interaction.options.getSubcommand()];
+    const subcmd: MessageExecutable<CommandInteraction> = new Action(interaction, db);
     subcmd.execute();
 }
 
