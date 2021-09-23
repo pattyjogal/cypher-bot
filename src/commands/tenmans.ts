@@ -93,6 +93,13 @@ class SubcommandTenmansStart extends MessageExecutable<CommandInteraction> {
     time = this.interaction.options.getString("time");
     tenmansQueue = [];
     const queueChannel = botConfig.queueMsgChannel as TextChannel;
+    if (!queueChannel) {
+      this.interaction.reply({
+        content:
+          "No queue message channel configured. Please set channel id using '/config defaultChannel'.",
+        ephemeral: true,
+      });
+    }
 
     const queueId = "stub";
 
@@ -121,7 +128,7 @@ export async function cmd_tenmans(interaction, db: Db) {
     console.error("Bad action:", interaction.options.getSubcommand());
     interaction.reply({
       ephemeral: true,
-      content: "Error logged; please tell an admin what you were trying to do"
+      content: "Error logged; please tell an admin what you were trying to do",
     });
     return;
   }
@@ -149,7 +156,7 @@ export async function handleButton(interaction: ButtonInteraction, db: Db) {
     console.error("Bad action:", interaction.customId);
     interaction.reply({
       ephemeral: true,
-      content: "Error logged; please tell an admin what you were trying to do"
+      content: "Error logged; please tell an admin what you were trying to do",
     });
     return;
   }
