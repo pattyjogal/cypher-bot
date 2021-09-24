@@ -1,46 +1,66 @@
+import { CommandInteraction, Message } from "discord.js";
 import { Db } from "mongodb";
 
-async function subcmd_new(interaction, db: Db) {
-    const gameTag = interaction.options.getString("val_id");
-    const pronouns = interaction.options.getString("pronouns");
-    const result = await db.collection("members").insertOne({
-        gameTag,
-        pronouns,
-        discordId: interaction.user.id,
-    });
+import { MessageExecutable } from "./command";
 
-    if (!result) {
-        interaction.reply({
-        content:
-            "Ah, my eyes are down. I couldn't register you; check with an admin.",
-        ephemeral: true,
+class NewUserSubcommand extends MessageExecutable<CommandInteraction> {
+    async execute() {
+        const gameTag = this.interaction.options.getString("val_id");
+        const pronouns = this.interaction.options.getString("pronouns");
+        const existingUser = await this.db.collection("members").findOne({
+            discordId: this.interaction.user.id
         });
-    } else {
-        interaction.reply({
-        content:
-            "I know **exactly** who you are; you're registered! Feel free to update with /register update",
-        ephemeral: true,
+
+        // Exit if data for a user already exists
+        if (!!existingUser) {
+            this.interaction.reply({
+                content:
+                    "I already know **exactly** who you are. No need to register again, my friend!",
+                ephemeral: true,
+            });
+            return;
+        }
+
+        const result = await this.db.collection("members").insertOne({
+            gameTag,
+            pronouns,
+            discordId: this.interaction.user.id,
         });
-        const user = interaction.user;
-        const role = interaction.guild.roles.cache.find(
-        (role) => role.name === "Valorant"
-        );
-        interaction.guild.members.cache.get(user.id).roles.add(role);
+
+        if (!result) {
+            this.interaction.reply({
+                content:
+                    "Ah, my eyes are down. I couldn't register you; check with an admin.",
+                ephemeral: true,
+            });
+        } else {
+            this.interaction.reply({
+                content:
+                    "I know **exactly** who you are; you're registered! Feel free to update with /register update",
+                ephemeral: true,
+            });
+            const user = this.interaction.user;
+            const role = this.interaction.guild.roles.cache.find(
+                (role) => role.name === "Valorant"
+            );
+            this.interaction.guild.members.cache.get(user.id).roles.add(role);
+        }
     }
 }
 
-async function subcmd_update(interaction, db: Db) {
-    const gameTag =
-            interaction.options.getString("val_id") || undefined;
+class UpdateUserSubcommand extends MessageExecutable<CommandInteraction> {
+    async execute() {
+        const gameTag =
+            this.interaction.options.getString("val_id") || undefined;
         const pronouns =
-            interaction.options.getString("pronouns") || undefined;
+            this.interaction.options.getString("pronouns") || undefined;
         console.log({
             gameTag,
             pronouns,
         });
-        const result = await db.collection("members").updateOne(
+        const result = await this.db.collection("members").updateOne(
             {
-            discordId: interaction.user.id,
+            discordId: this.interaction.user.id,
             },
             {
             $set: {
@@ -51,29 +71,30 @@ async function subcmd_update(interaction, db: Db) {
         );
 
         if (!result) {
-            interaction.reply({
+            this.interaction.reply({
             content:
                 "They found my wire... I couldn't update you; check with an admin.",
             ephemeral: true,
             });
         } else {
-            interaction.reply({
+            this.interaction.reply({
             content:
                 "Caught one; you've been updated! Feel free to update again with /register update",
             ephemeral: true,
             });
         }
+    }
 }
 
 function cmd_register(interaction, db: Db) {
     const commands = {
-        "new": subcmd_new,
-        "update": subcmd_update
+        "new": NewUserSubcommand,
+        "update": UpdateUserSubcommand
     };
 
-    // Wrap function call to pass same args to all methods
-    const call_fn = commands[interaction.options.getSubcommand()];
-    call_fn(interaction, db);
+    const Action = commands[interaction.options.getSubcommand()];
+    const subcmd: MessageExecutable<CommandInteraction> = new Action(interaction, db);
+    subcmd.execute();
 }
 
 export default cmd_register;
