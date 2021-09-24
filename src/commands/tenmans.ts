@@ -134,7 +134,7 @@ class TenmansCloseSubcommand extends MessageExecutable<CommandInteraction> {
 
     // Teardown - clear current queue
     tenmansQueue = []
-    await activeTenmansMessage.delete();
+    await activeTenmansMessage?.delete();
   }
 }
 
