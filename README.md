@@ -18,6 +18,7 @@ In your `.env` file, you need to set the following variables:
 CYPHERBOT_CLIENT_ID=<client id from discord>
 CYPHERBOT_TARGET_GUILD_ID=<server id for testing>
 CYPHERBOT_TOKEN=<bot oauth token from discord>
+DEFAULT_QUEUEMSG_CHANNELID=<id for channel you want embeds to appear in>
 DB_NAME=<database name for connection>
 DB_CONN_STRING=mongodb+srv://<username>:<password>@<host>/<database>?retryWrites=true&w=majority
 ```
