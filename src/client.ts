@@ -19,7 +19,7 @@ async function initBotConfig(client: Client, db: Db) {
   if (!botConfigDoc) {
     // Persist default configuration data
     const defaultChannelId =
-      process.env.DEFAULT_QUEUEMSG_CHANNELID || "885704092142428200";
+      process.env.DEFAULT_QUEUEMSG_CHANNELID;
 
     botConfigDoc = await botConfigCollection.insertOne({
       configName: "bot",
