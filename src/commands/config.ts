@@ -38,11 +38,19 @@ class DefaultChannelSubcommand extends MessageExecutable<CommandInteraction> {
     // Persist channel
     this.db.collection("config").updateOne(
       {
-        "configName": "bot"
-      }, {
-        "queueChannelId": botConfig.queueMsgChannel.id
+        configName: "bot",
+      },
+      {
+        $set: {
+          queueChannelId: botConfig.queueMsgChannel.id,
+        }
       }
     );
+
+    this.interaction.reply({
+      content: "Queue channel updated!",
+      ephemeral: true,
+    });
   }
 }
 
@@ -55,16 +63,16 @@ export async function cmdConfig(interaction, db: Db) {
       ): MessageExecutable<CommandInteraction>;
     };
   } = {
-    defaultChannel: DefaultChannelSubcommand,
+    default_channel: DefaultChannelSubcommand,
   };
-  
+
   // Wrap function call to pass same args to all methods
   const Action = commands[interaction.options.getSubcommand()];
   if (Action === undefined) {
     console.error("Bad action:", interaction.options.getSubcommand());
     interaction.reply({
       ephemeral: true,
-      content: "Error logged; please tell an admin what you were trying to do."
+      content: "Error logged; please tell an admin what you were trying to do.",
     });
     return;
   }
