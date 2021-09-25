@@ -6,6 +6,7 @@ import cmd_register from "./commands/register";
 import {
   cmd_tenmans,
   handleButton as tenmansHandleButton,
+  handleVoteCleaning,
 } from "./commands/tenmans";
 import { cmdConfig } from "./commands/config";
 import botConfig from "./config/botConfig";
@@ -36,6 +37,8 @@ async function initBotConfig(client: Client, db: Db) {
   botConfig.queueMsgChannel = client.channels.cache.get(channelId);
   botConfig.minVoteCount = botConfigDoc.minVoteCount;
   botConfig.hoursTillVoteClose = botConfigDoc.hoursTillVoteClose;
+
+  setInterval(handleVoteCleaning, 300000); // Clean vote embeds every 5 minutes
 }
 
 export default (db: Db) => {

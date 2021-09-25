@@ -300,3 +300,15 @@ const createQueueActionRow = (queueId) => {
       .setStyle(Constants.MessageButtonStyles.DANGER)
   );
 };
+
+export async function handleVoteCleaning() {
+  if (activeVoteMessage) {
+    // Close vote if it has expired
+    if (voteClosingTime < new Date()) {
+      await activeVoteMessage.delete();
+      
+      tenmansQueue = [];
+      voteClosingTime = null;
+    }
+  }
+}
