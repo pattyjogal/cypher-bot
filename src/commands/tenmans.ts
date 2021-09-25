@@ -23,6 +23,8 @@ import {
 let tenmansQueue: Member[] = [];
 let time: String | null;
 let activeTenmansMessage: Message | null;
+let activeVoteMessage: Message | null;
+let voteClosingTime: Date | null;
 
 abstract class QueueAction<
   T extends RepliableInteraction
@@ -138,6 +140,62 @@ class TenmansCloseSubcommand extends MessageExecutable<CommandInteraction> {
   }
 }
 
+class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction> {
+  async afterUserExecute() {
+    if (activeTenmansMessage) {
+      this.interaction.reply({
+        content: "You should have been looking more closely. There's already a queue - use that one instead!",
+        ephemeral: true
+      });
+
+      return;
+    }
+
+    const queueChannel = botConfig.queueMsgChannel as TextChannel;
+    if (!queueChannel) {
+      this.interaction.reply({
+        content:
+          "No queue message channel configured. Please set channel id using '/config defaultChannel'.",
+        ephemeral: true,
+      });
+
+      return;
+    }
+
+    if (!tenmansQueue?.length) {
+      // init queue if it doesn't exist
+      voteClosingTime = new Date()
+      voteClosingTime.setHours(voteClosingTime.getHours() + botConfig.hoursTillVoteClose)
+      time = this.interaction.options.getString("time");
+
+      tenmansQueue = [];
+    }
+    tenmansQueue.push(this.user);
+
+    if (tenmansQueue.length >= botConfig.minVoteCount) {
+      // Generate proper interactable queue once min votes reached
+      await activeVoteMessage.delete();
+      voteClosingTime = null;
+
+      activeTenmansMessage = await queueChannel.send({
+        embeds: [createEmbed(time)]
+      })
+    } else {
+      const votesStillNeeded = botConfig.minVoteCount - tenmansQueue.length;
+
+      if (!activeVoteMessage) {
+        activeVoteMessage = await queueChannel.send({
+          embeds: [createVoteEmbed(votesStillNeeded, time, voteClosingTime)],
+        })
+      } else {
+        activeVoteMessage.edit({
+          embeds: [createVoteEmbed(votesStillNeeded, time, voteClosingTime)]
+        })
+      }
+    }
+  }
+}
+
 export async function cmd_tenmans(interaction, db: Db) {
   const commands: {
     [key: string]: {
@@ -148,7 +206,8 @@ export async function cmd_tenmans(interaction, db: Db) {
     };
   } = {
     start: SubcommandTenmansStart,
-    end: TenmansCloseSubcommand
+    end: TenmansCloseSubcommand,
+    vote: TenmansVoteSubcommand,
   };
 
   // Wrap function call to pass same args to all methods
@@ -213,6 +272,21 @@ const createEmbed = (time) =>
     )
     .setTimestamp()
     .setFooter("Last Updated");
+
+const createVoteEmbed = (votesStillNeeded: number, time, closingTime: Date) =>
+  new MessageEmbed()
+    .setColor("#0099ff")
+    .setTitle(`Ten Mans Vote For ${time}`)
+    .addField("Votes needed to start queue: ", votesStillNeeded.toString(), true)
+    .addField(
+      "Discord Member",
+      tenmansQueue.length > 0
+        ? tenmansQueue.map((member) => `<@${member.discordId}>`).join("\n")
+        : "No Players",
+      true
+    )
+    .setTimestamp()
+    .setFooter("Vote ends at:", closingTime.toLocaleString());
 
 const createQueueActionRow = (queueId) => {
   return new MessageActionRow().addComponents(
