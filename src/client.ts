@@ -20,15 +20,22 @@ async function initBotConfig(client: Client, db: Db) {
     // Persist default configuration data
     const defaultChannelId =
       process.env.DEFAULT_QUEUEMSG_CHANNELID;
+    const minVoteCount = process.env.MIN_VOTE_COUNT;
+    const hoursTillVoteClose = process.env.HOURS_TO_CLOSE;
 
     botConfigDoc = await botConfigCollection.insertOne({
       configName: "bot",
+      minVoteCount: minVoteCount,
+      hoursTillVoteClose: hoursTillVoteClose,
       queueChannelId: defaultChannelId,
     });
   }
 
   const channelId = botConfigDoc.queueChannelId;
+
   botConfig.queueMsgChannel = client.channels.cache.get(channelId);
+  botConfig.minVoteCount = botConfigDoc.minVoteCount;
+  botConfig.hoursTillVoteClose = botConfigDoc.hoursTillVoteClose;
 }
 
 export default (db: Db) => {
