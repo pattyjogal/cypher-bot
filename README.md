@@ -20,6 +20,7 @@ CYPHERBOT_TARGET_GUILD_ID=<server id for testing>
 CYPHERBOT_TOKEN=<bot oauth token from discord>
 MIN_VOTE_COUNT=<number of votes required to trigger a queue creation>
 HOURS_TO_CLOSE=<hours for votes to last until they auto-close>
+DEFAULT_QUEUEMSG_CHANNELID=<id for channel you want embeds to appear in>
 DB_NAME=<database name for connection>
 DB_CONN_STRING=mongodb+srv://<username>:<password>@<host>/<database>?retryWrites=true&w=majority
 ```
