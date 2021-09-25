@@ -33,7 +33,7 @@ abstract class QueueAction<
 
   abstract updateQueue();
 
-  afterUserExecute(): Promise<any> {
+  async afterUserExecute(): Promise<any> {
     if (activeTenmansMessage === null) {
       this.interaction.reply({
         content: "I must wait a moment! There is no active 10mans queue.",
@@ -42,7 +42,7 @@ abstract class QueueAction<
       return;
     }
 
-    this.updateQueue();
+    await this.updateQueue();
 
     activeTenmansMessage.edit({
       embeds: [createEmbed(time)],
@@ -67,6 +67,36 @@ class LeaveQueueButtonAction extends QueueAction<ButtonInteraction> {
     );
     this.interaction.reply({
       content: "This is no problem; You've been removed from the queue.",
+      ephemeral: true,
+    });
+  }
+}
+
+class ManualAddUserToQueue extends QueueAction<CommandInteraction> {
+  async updateQueue() {
+    const targetUser = this.interaction.options.getUser("member");
+    const targetMember = (await this.db.collection("members").findOne({
+      discordId: targetUser.id,
+    })) as Member;
+    tenmansQueue.push(targetMember);
+    this.interaction.reply({
+      content: `User \`${targetUser.username}\` added to the queue.`,
+      ephemeral: true,
+    });
+  }
+}
+
+class ManualRemoveUserToQueue extends QueueAction<CommandInteraction> {
+  async updateQueue() {
+    const targetUser = this.interaction.options.getUser("member");
+    const targetMember = (await this.db.collection("members").findOne({
+      discordId: targetUser.id,
+    })) as Member;
+    tenmansQueue = tenmansQueue.filter(
+      (member) => member.discordId !== targetMember.discordId
+    );
+    this.interaction.reply({
+      content: `User \`${targetUser.username}\` removed from the queue.`,
       ephemeral: true,
     });
   }
@@ -133,22 +163,25 @@ class TenmansCloseSubcommand extends MessageExecutable<CommandInteraction> {
     }
 
     // Teardown - clear current queue
-    tenmansQueue = []
+    tenmansQueue = [];
     await activeTenmansMessage.delete();
   }
 }
 
-export async function cmd_tenmans(interaction, db: Db) {
+export async function cmd_tenmans(interaction: CommandInteraction, db: Db) {
   const commands: {
     [key: string]: {
       new (
         interaction: Interaction,
-        db: Db
+        db: Db,
+        queueId: string
       ): MessageExecutable<CommandInteraction>;
     };
   } = {
     start: SubcommandTenmansStart,
-    end: TenmansCloseSubcommand
+    end: TenmansCloseSubcommand,
+    add_user: ManualAddUserToQueue,
+    remove_user: ManualRemoveUserToQueue,
   };
 
   // Wrap function call to pass same args to all methods
@@ -157,11 +190,11 @@ export async function cmd_tenmans(interaction, db: Db) {
     console.error("Bad action:", interaction.options.getSubcommand());
     interaction.reply({
       ephemeral: true,
-      content: "Error logged; please tell an admin what you were trying to do."
+      content: "Error logged; please tell an admin what you were trying to do.",
     });
     return;
   }
-  const command = new Action(interaction, db);
+  const command = new Action(interaction, db, interaction.options.getString("queueId"));
   command.execute();
 }
 
@@ -185,7 +218,7 @@ export async function handleButton(interaction: ButtonInteraction, db: Db) {
     console.error("Bad action:", interaction.customId);
     interaction.reply({
       ephemeral: true,
-      content: "Error logged; please tell an admin what you were trying to do."
+      content: "Error logged; please tell an admin what you were trying to do.",
     });
     return;
   }
