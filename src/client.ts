@@ -38,7 +38,7 @@ export default (db: Db) => {
     console.log(`Logged in as ${client.user.tag}!`);
 
     console.log(`Loading configuration data from db...`);
-    await initBotConfig(this, db);
+    await initBotConfig(client, db);
     console.log(`Config successfully initialized.`);
   });
 
