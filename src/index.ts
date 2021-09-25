@@ -94,7 +94,7 @@ const commands = [
     description: "Configure Cypher Bot settings via subcommands",
     options: [
       {
-        name: "defaultChannel",
+        name: "default_channel",
         description: "The channel to place queue embed messages",
         type: ApplicationCommandOptionType.Subcommand,
         options: [
