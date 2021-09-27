@@ -8,7 +8,8 @@ import {
   Constants,
   ButtonInteraction,
   Interaction,
-  GuildApplicationCommandManager,
+  Role,
+  Collection,
 } from "discord.js";
 import { Db } from "mongodb";
 import botConfig from "../config/botConfig";
@@ -182,6 +183,26 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
       return;
     }
 
+    // Verify that a pingable role exists for 10 mans on this server
+    const roleId = await this.interaction.guild.roles.fetch()
+                      .then((roles: Collection<String, Role>) => {
+                        for (const role of roles.values()) {
+                          if (role.name === "10 Mans") {
+                            return role.id;
+                          }
+                        }
+                      })
+                      .catch(console.error);
+
+    if (!roleId) {
+      this.interaction.reply({
+        content: "My camera is destroyed - cannot find a 10 mans role on this server. Message an admin.",
+        ephemeral: true,
+      })
+
+      return;
+    }
+
     // Verify bot config is valid
     const required_configs = ["hoursTillVoteClose", "minVoteCount", "queueMsgChannel"];
     for (const setting in required_configs) {
@@ -214,6 +235,10 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
 
       activeTenmansMessage = await queueChannel.send({
         embeds: [createEmbed(time)]
+      })
+
+      await queueChannel.send({
+        content: `<@${roleId}> that Radianite must be ours! A queue has been created!`,
       })
     } else {
       const votesStillNeeded = botConfig.minVoteCount - tenmansQueue.length;
