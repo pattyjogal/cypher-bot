@@ -230,8 +230,8 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
     }
 
     // Verify bot config is valid
-    const required_configs = ["hoursTillVoteClose", "minVoteCount", "queueMsgChannel"];
-    for (const setting in required_configs) {
+    const requiredConfigs = ["hoursTillVoteClose", "minVoteCount", "queueMsgChannel"];
+    for (const setting in requiredConfigs) {
       if (!botConfig[setting]) {
         this.interaction.reply({
           content:
