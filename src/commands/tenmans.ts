@@ -79,6 +79,24 @@ abstract class StandardQueueAction<
   }
 }
 
+abstract class VoteQueueAction<
+  T extends RepliableInteraction
+> extends BaseQueueAction<T> {
+  verifyQueueId() {
+    return "";
+  }
+
+  updateUserInterface () {
+    const votesStillNeeded = botConfig.minVoteCount - tenmansQueue.length;
+
+    if (!!activeVoteMessage) {
+      activeVoteMessage.edit({
+        embeds: [createVoteEmbed(votesStillNeeded, time, voteClosingTime)]
+      });
+    }
+  }
+}
+
 class JoinQueueButtonAction extends StandardQueueAction<ButtonInteraction> {
   updateQueue() {
     tenmansQueue.push(this.user);
@@ -98,6 +116,46 @@ class LeaveQueueButtonAction extends StandardQueueAction<ButtonInteraction> {
       content: "This is no problem; You've been removed from the queue.",
       ephemeral: true,
     });
+  }
+}
+
+class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
+  async updateQueue() {
+    const queueChannel = botConfig.queueMsgChannel as TextChannel;
+
+    // Verify that a pingable role exists for 10 mans on this server
+    const roleId = await this.interaction.guild.roles.fetch()
+    .then((roles: Collection<String, Role>) => {
+      for (const role of roles.values()) {
+        if (role.name === "10 Mans") {
+          return role.id;
+        }
+      }
+    })
+    .catch(console.error);
+
+    if (!roleId) {
+      this.interaction.reply({
+        content: "My camera is destroyed - cannot find a 10 mans role on this server. Message an admin.",
+        ephemeral: true,
+      });
+
+      return;
+    }
+
+    if (tenmansQueue.length >= botConfig.minVoteCount) {
+      // Generate proper interactable queue once min votes reached
+      await activeVoteMessage.delete();
+      voteClosingTime = null;
+
+      activeTenmansMessage = await queueChannel.send({
+        embeds: [createEmbed(time)]
+      })
+
+      await queueChannel.send({
+        content: `<@${roleId}> that Radianite must be ours! A queue has been created!`,
+      });
+    }
   }
 }
 
@@ -209,26 +267,6 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
       return;
     }
 
-    // Verify that a pingable role exists for 10 mans on this server
-    const roleId = await this.interaction.guild.roles.fetch()
-                      .then((roles: Collection<String, Role>) => {
-                        for (const role of roles.values()) {
-                          if (role.name === "10 Mans") {
-                            return role.id;
-                          }
-                        }
-                      })
-                      .catch(console.error);
-
-    if (!roleId) {
-      this.interaction.reply({
-        content: "My camera is destroyed - cannot find a 10 mans role on this server. Message an admin.",
-        ephemeral: true,
-      })
-
-      return;
-    }
-
     // Verify bot config is valid
     const requiredConfigs = ["hoursTillVoteClose", "minVoteCount", "queueMsgChannel"];
     for (const setting in requiredConfigs) {
@@ -250,34 +288,22 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
       time = this.interaction.options.getString("time");
 
       tenmansQueue = [];
-    }
-    tenmansQueue.push(this.user);
+      tenmansQueue.push(this.user);
 
-    const queueChannel = botConfig.queueMsgChannel as TextChannel;
-    if (tenmansQueue.length >= botConfig.minVoteCount) {
-      // Generate proper interactable queue once min votes reached
-      await activeVoteMessage.delete();
-      voteClosingTime = null;
+      const queueChannel = botConfig.queueMsgChannel as TextChannel;
+      const queueId = "stub";
 
-      activeTenmansMessage = await queueChannel.send({
-        embeds: [createEmbed(time)]
-      })
-
-      await queueChannel.send({
-        content: `<@${roleId}> that Radianite must be ours! A queue has been created!`,
-      })
+      activeVoteMessage = await queueChannel.send({
+        embeds: [createVoteEmbed(botConfig.minVoteCount, time, voteClosingTime)],
+        components: [createVoteQueueActionRow(queueId)],
+      });
     } else {
-      const votesStillNeeded = botConfig.minVoteCount - tenmansQueue.length;
+      this.interaction.reply({
+        content: "Cage triggered. A vote is already active, check it out!",
+        ephemeral: true,
+      });
 
-      if (!activeVoteMessage) {
-        activeVoteMessage = await queueChannel.send({
-          embeds: [createVoteEmbed(votesStillNeeded, time, voteClosingTime)],
-        })
-      } else {
-        activeVoteMessage.edit({
-          embeds: [createVoteEmbed(votesStillNeeded, time, voteClosingTime)]
-        })
-      }
+      return;
     }
   }
 }
@@ -320,11 +346,12 @@ export async function handleButton(interaction: ButtonInteraction, db: Db) {
         interaction: ButtonInteraction,
         db: Db,
         queueId: string
-      ): QueueAction<ButtonInteraction>;
+      ): BaseQueueAction<ButtonInteraction>;
     };
   } = {
     join: JoinQueueButtonAction,
     leave: LeaveQueueButtonAction,
+    vote: VoteQueueButtonAction,
   };
   const actionParts = interaction.customId.split(".");
   const [commandName, queueId] = actionParts[actionParts.length - 1].split(":");
@@ -388,6 +415,15 @@ const createQueueActionRow = (queueId) => {
       .setCustomId(`tenmans.leave:${queueId}`)
       .setLabel("Leave")
       .setStyle(Constants.MessageButtonStyles.DANGER)
+  );
+};
+
+const createVoteQueueActionRow = (queueId) => {
+  return new MessageActionRow().addComponents(
+    new MessageButton()
+      .setCustomId(`tenmans.vote:${queueId}`)
+      .setLabel("Vote")
+      .setStyle(Constants.MessageButtonStyles.SUCCESS),
   );
 };
 
