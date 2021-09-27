@@ -209,7 +209,7 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
       if (!botConfig[setting]) {
         this.interaction.reply({
           content:
-            `${setting} not configured. Please ask an admin to configure this value.`,
+            `Careful now. ${setting} not configured. Please ask an admin to configure this value.`,
           ephemeral: true,
         });
   
