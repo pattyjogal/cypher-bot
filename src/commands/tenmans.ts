@@ -172,6 +172,7 @@ class TenmansCloseSubcommand extends MessageExecutable<CommandInteraction> {
 
 class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction> {
   async afterUserExecute() {
+    // Verify queue not already active
     if (activeTenmansMessage) {
       this.interaction.reply({
         content: "You should have been looking more closely. There's already a queue - use that one instead!",
@@ -181,15 +182,18 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
       return;
     }
 
-    const queueChannel = botConfig.queueMsgChannel as TextChannel;
-    if (!queueChannel) {
-      this.interaction.reply({
-        content:
-          "No queue message channel configured. Please set channel id using '/config defaultChannel'.",
-        ephemeral: true,
-      });
-
-      return;
+    // Verify bot config is valid
+    const required_configs = ["hoursTillVoteClose", "minVoteCount", "queueMsgChannel"];
+    for (const setting in required_configs) {
+      if (!botConfig[setting]) {
+        this.interaction.reply({
+          content:
+            `${setting} not configured. Please ask an admin to configure this value.`,
+          ephemeral: true,
+        });
+  
+        return;
+      }
     }
 
     if (!tenmansQueue?.length) {
@@ -202,6 +206,7 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
     }
     tenmansQueue.push(this.user);
 
+    const queueChannel = botConfig.queueMsgChannel as TextChannel;
     if (tenmansQueue.length >= botConfig.minVoteCount) {
       // Generate proper interactable queue once min votes reached
       await activeVoteMessage.delete();
