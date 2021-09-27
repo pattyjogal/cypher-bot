@@ -349,7 +349,7 @@ const createVoteEmbed = (votesStillNeeded: number, time, closingTime: Date) =>
       true
     )
     .setTimestamp()
-    .setFooter("Vote ends at:", closingTime.toLocaleString());
+    .setFooter("Vote ends at", closingTime.toLocaleString());
 
 const createQueueActionRow = (queueId) => {
   return new MessageActionRow().addComponents(
