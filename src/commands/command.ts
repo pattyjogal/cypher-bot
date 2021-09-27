@@ -28,7 +28,7 @@ export abstract class RegisteredUserExecutable<
     if (!user) {
       this.interaction.reply({
         content:
-          "Who are you? Copy of me?! You need to register with me before participating in 10mans! Please visit #rules for more info.",
+          "Who are you? You need to register with me before participating in 10mans! Please visit #rules for more info.",
         ephemeral: true,
       });
 

@@ -36,11 +36,11 @@ abstract class BaseQueueAction<
   /// Verify that the queue id stored in the constructor is correct.
   /// If not, allow child class to throw custom error message and
   /// fail gracefully.
-  abstract verifyQueueId() : string;
+  abstract verifyQueueId(): string;
 
   /// Perform actions after verifying queue id. Should not modify any
   /// messages related to queue state.
-  abstract updateQueue();
+  abstract updateQueue(): Promise<boolean>;
 
   /// Perform actions after updating queue state. This includes things
   /// like updating related embed messages, etc.
@@ -57,9 +57,11 @@ abstract class BaseQueueAction<
       return;
     }
 
-    await this.updateQueue();
+    const shouldRender = await this.updateQueue();
 
-    await this.updateUserInterface();
+    if (shouldRender) {
+      this.updateUserInterface();
+    }
   }
 }
 
@@ -86,29 +88,38 @@ abstract class VoteQueueAction<
     return "";
   }
 
-  updateUserInterface () {
+  updateUserInterface() {
     const votesStillNeeded = botConfig.minVoteCount - tenmansQueue.length;
 
-    if (!!activeVoteMessage) {
-      activeVoteMessage.edit({
-        embeds: [createVoteEmbed(votesStillNeeded, time, voteClosingTime)]
-      });
-    }
+    activeVoteMessage.edit({
+      embeds: [createVoteEmbed(votesStillNeeded, time, voteClosingTime)],
+    });
   }
 }
 
 class JoinQueueButtonAction extends StandardQueueAction<ButtonInteraction> {
-  updateQueue() {
+  async updateQueue(): Promise<boolean> {
+    if (tenmansQueue.some(queueUser => this.user.discordId === queueUser.discordId)) {
+      this.interaction.reply({
+        content: "Who are you? Copy of me?! You're already in the queue!",
+        ephemeral: true,
+      });
+
+      return false;
+    }
+
     tenmansQueue.push(this.user);
     this.interaction.reply({
       content: "Greetings! You've been added to the queue.",
       ephemeral: true,
     });
+
+    return true;
   }
 }
 
 class LeaveQueueButtonAction extends StandardQueueAction<ButtonInteraction> {
-  updateQueue() {
+  async updateQueue(): Promise<boolean> {
     tenmansQueue = tenmansQueue.filter(
       (member) => member.discordId !== this.user.discordId
     );
@@ -116,51 +127,77 @@ class LeaveQueueButtonAction extends StandardQueueAction<ButtonInteraction> {
       content: "This is no problem; You've been removed from the queue.",
       ephemeral: true,
     });
+
+    return true;
   }
 }
 
 class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
-  async updateQueue() {
+  async updateQueue(): Promise<boolean> {
     const queueChannel = botConfig.queueMsgChannel as TextChannel;
 
     // Verify that a pingable role exists for 10 mans on this server
-    const roleId = await this.interaction.guild.roles.fetch()
-    .then((roles: Collection<String, Role>) => {
-      for (const role of roles.values()) {
-        if (role.name === "10 Mans") {
-          return role.id;
+    const roleId = await this.interaction.guild.roles
+      .fetch()
+      .then((roles: Collection<String, Role>) => {
+        for (const role of roles.values()) {
+          if (role.name === "10 Mans") {
+            return role.id;
+          }
         }
-      }
-    })
-    .catch(console.error);
+      })
+      .catch(console.error);
 
     if (!roleId) {
       this.interaction.reply({
-        content: "My camera is destroyed - cannot find a 10 mans role on this server. Message an admin.",
+        content:
+          "My camera is destroyed - cannot find a 10 mans role on this server. Message an admin.",
         ephemeral: true,
       });
 
-      return;
+      return false;
     }
+
+    if (tenmansQueue.some(queueUser => this.user.discordId === queueUser.discordId)) {
+      this.interaction.reply({
+        content: "Who are you? Copy of me?! You've already voted!",
+        ephemeral: true,
+      });
+
+      return false;
+    }
+
+    tenmansQueue.push(this.user);
+
+    this.interaction.reply({
+      content: "Greetings! Your vote has been counted.",
+      ephemeral: true,
+    });
 
     if (tenmansQueue.length >= botConfig.minVoteCount) {
       // Generate proper interactable queue once min votes reached
       await activeVoteMessage.delete();
       voteClosingTime = null;
+      activeVoteMessage = null;
 
       activeTenmansMessage = await queueChannel.send({
-        embeds: [createEmbed(time)]
-      })
+        embeds: [createEmbed(time)],
+        components: [createQueueActionRow(this.queueId)],
+      });
 
       await queueChannel.send({
         content: `<@${roleId}> that Radianite must be ours! A queue has been created!`,
       });
+
+      return false;
     }
+
+    return true;
   }
 }
 
 class ManualAddUserToQueue extends StandardQueueAction<CommandInteraction> {
-  async updateQueue() {
+  async updateQueue(): Promise<boolean> {
     const targetUser = this.interaction.options.getUser("member");
     const targetMember = (await this.db.collection("members").findOne({
       discordId: targetUser.id,
@@ -170,11 +207,13 @@ class ManualAddUserToQueue extends StandardQueueAction<CommandInteraction> {
       content: `User \`${targetUser.username}\` added to the queue.`,
       ephemeral: true,
     });
+
+    return true;
   }
 }
 
 class ManualRemoveUserToQueue extends StandardQueueAction<CommandInteraction> {
-  async updateQueue() {
+  async updateQueue(): Promise<boolean> {
     const targetUser = this.interaction.options.getUser("member");
     const targetMember = (await this.db.collection("members").findOne({
       discordId: targetUser.id,
@@ -186,6 +225,8 @@ class ManualRemoveUserToQueue extends StandardQueueAction<CommandInteraction> {
       content: `User \`${targetUser.username}\` removed from the queue.`,
       ephemeral: true,
     });
+
+    return true;
   }
 }
 
@@ -250,7 +291,7 @@ class TenmansCloseSubcommand extends MessageExecutable<CommandInteraction> {
     }
 
     // Teardown - clear current queue
-    tenmansQueue = []
+    tenmansQueue = [];
     await activeTenmansMessage?.delete();
   }
 }
@@ -260,31 +301,37 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
     // Verify queue not already active
     if (activeTenmansMessage) {
       this.interaction.reply({
-        content: "You should have been looking more closely. There's already a queue - use that one instead!",
-        ephemeral: true
+        content:
+          "You should have been looking more closely. There's already a queue - use that one instead!",
+        ephemeral: true,
       });
 
       return;
     }
 
     // Verify bot config is valid
-    const requiredConfigs = ["hoursTillVoteClose", "minVoteCount", "queueMsgChannel"];
-    for (const setting in requiredConfigs) {
+    const requiredConfigs = [
+      "hoursTillVoteClose",
+      "minVoteCount",
+      "queueMsgChannel",
+    ];
+    for (const setting of requiredConfigs) {
       if (!botConfig[setting]) {
         this.interaction.reply({
-          content:
-            `Careful now. ${setting} not configured. Please ask an admin to configure this value.`,
+          content: `Careful now. \`${setting}\` not configured. Please ask an admin to configure this value.`,
           ephemeral: true,
         });
-  
+
         return;
       }
     }
 
     if (!tenmansQueue?.length) {
       // init queue if it doesn't exist
-      voteClosingTime = new Date()
-      voteClosingTime.setHours(voteClosingTime.getHours() + botConfig.hoursTillVoteClose)
+      voteClosingTime = new Date();
+      voteClosingTime.setHours(
+        voteClosingTime.getHours() + botConfig.hoursTillVoteClose
+      );
       time = this.interaction.options.getString("time");
 
       tenmansQueue = [];
@@ -293,9 +340,17 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
       const queueChannel = botConfig.queueMsgChannel as TextChannel;
       const queueId = "stub";
 
+      const votesStillNeeded = botConfig.minVoteCount - tenmansQueue.length;
       activeVoteMessage = await queueChannel.send({
-        embeds: [createVoteEmbed(botConfig.minVoteCount, time, voteClosingTime)],
+        embeds: [
+          createVoteEmbed(votesStillNeeded, time, voteClosingTime),
+        ],
         components: [createVoteQueueActionRow(queueId)],
+      });
+
+      this.interaction.reply({
+        content: "Vote started!",
+        ephemeral: true,
       });
     } else {
       this.interaction.reply({
@@ -335,7 +390,11 @@ export async function cmd_tenmans(interaction: CommandInteraction, db: Db) {
     });
     return;
   }
-  const command = new Action(interaction, db, interaction.options.getString("queueId"));
+  const command = new Action(
+    interaction,
+    db,
+    interaction.options.getString("queueId")
+  );
   command.execute();
 }
 
@@ -394,7 +453,11 @@ const createVoteEmbed = (votesStillNeeded: number, time, closingTime: Date) =>
   new MessageEmbed()
     .setColor("#0099ff")
     .setTitle(`Ten Mans Vote For ${time}`)
-    .addField("Votes needed to start queue: ", votesStillNeeded.toString(), true)
+    .addField(
+      "Votes needed to start queue: ",
+      votesStillNeeded.toString(),
+      true
+    )
     .addField(
       "Discord Member",
       tenmansQueue.length > 0
@@ -403,7 +466,7 @@ const createVoteEmbed = (votesStillNeeded: number, time, closingTime: Date) =>
       true
     )
     .setTimestamp()
-    .setFooter("Vote ends at", closingTime.toLocaleString());
+    .setFooter(`Vote ends at ${closingTime.toLocaleString()}`);
 
 const createQueueActionRow = (queueId) => {
   return new MessageActionRow().addComponents(
@@ -423,7 +486,7 @@ const createVoteQueueActionRow = (queueId) => {
     new MessageButton()
       .setCustomId(`tenmans.vote:${queueId}`)
       .setLabel("Vote")
-      .setStyle(Constants.MessageButtonStyles.SUCCESS),
+      .setStyle(Constants.MessageButtonStyles.SUCCESS)
   );
 };
 
@@ -432,7 +495,7 @@ export async function handleVoteCleaning() {
     // Close vote if it has expired
     if (voteClosingTime < new Date()) {
       await activeVoteMessage.delete();
-      
+
       tenmansQueue = [];
       voteClosingTime = null;
     }
