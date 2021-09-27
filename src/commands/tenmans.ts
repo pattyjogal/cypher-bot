@@ -27,33 +27,59 @@ let activeTenmansMessage: Message | null;
 let activeVoteMessage: Message | null;
 let voteClosingTime: Date | null;
 
-abstract class QueueAction<
+abstract class BaseQueueAction<
   T extends RepliableInteraction
 > extends RegisteredUserExecutable<T> {
   constructor(interaction: T, db: Db, protected queueId: string) {
     super(interaction, db);
   }
+  /// Verify that the queue id stored in the constructor is correct.
+  /// If not, allow child class to throw custom error message and
+  /// fail gracefully.
+  abstract verifyQueueId() : string;
 
+  /// Perform actions after verifying queue id. Should not modify any
+  /// messages related to queue state.
   abstract updateQueue();
 
+  /// Perform actions after updating queue state. This includes things
+  /// like updating related embed messages, etc.
+  abstract updateUserInterface();
+
   async afterUserExecute(): Promise<any> {
-    if (activeTenmansMessage === null) {
+    const errorMessage = this.verifyQueueId();
+    if (errorMessage) {
       this.interaction.reply({
-        content: "I must wait a moment! There is no active 10mans queue.",
+        content: errorMessage,
         ephemeral: true,
       });
+
       return;
     }
 
     await this.updateQueue();
 
+    await this.updateUserInterface();
+  }
+}
+
+abstract class StandardQueueAction<
+  T extends RepliableInteraction
+> extends BaseQueueAction<T> {
+  verifyQueueId() {
+    if (activeTenmansMessage === null) {
+      return "I must wait a moment! There is no active 10mans queue.";
+    }
+  }
+
+  updateUserInterface() {
     activeTenmansMessage.edit({
       embeds: [createEmbed(time)],
     });
   }
 }
 
-class JoinQueueButtonAction extends QueueAction<ButtonInteraction> {
+class JoinQueueButtonAction extends StandardQueueAction<ButtonInteraction> {
   updateQueue() {
     tenmansQueue.push(this.user);
     this.interaction.reply({
@@ -63,7 +89,7 @@ class JoinQueueButtonAction extends QueueAction<ButtonInteraction> {
   }
 }
 
-class LeaveQueueButtonAction extends QueueAction<ButtonInteraction> {
+class LeaveQueueButtonAction extends StandardQueueAction<ButtonInteraction> {
   updateQueue() {
     tenmansQueue = tenmansQueue.filter(
       (member) => member.discordId !== this.user.discordId
@@ -75,7 +101,7 @@ class LeaveQueueButtonAction extends QueueAction<ButtonInteraction> {
   }
 }
 
-class ManualAddUserToQueue extends QueueAction<CommandInteraction> {
+class ManualAddUserToQueue extends StandardQueueAction<CommandInteraction> {
   async updateQueue() {
     const targetUser = this.interaction.options.getUser("member");
     const targetMember = (await this.db.collection("members").findOne({
@@ -89,7 +115,7 @@ class ManualAddUserToQueue extends QueueAction<CommandInteraction> {
   }
 }
 
-class ManualRemoveUserToQueue extends QueueAction<CommandInteraction> {
+class ManualRemoveUserToQueue extends StandardQueueAction<CommandInteraction> {
   async updateQueue() {
     const targetUser = this.interaction.options.getUser("member");
     const targetMember = (await this.db.collection("members").findOne({
@@ -315,6 +341,7 @@ export async function handleButton(interaction: ButtonInteraction, db: Db) {
   command.execute();
 }
 
+// TODO: Move embed generators into their own directory/module
 const createEmbed = (time) =>
   new MessageEmbed()
     .setColor("#0099ff")
