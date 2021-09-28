@@ -137,18 +137,18 @@ class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
     const queueChannel = botConfig.queueMsgChannel as TextChannel;
 
     // Verify that a pingable role exists for 10 mans on this server
-    const roleId = await this.interaction.guild.roles
+    const tenmansRole = await this.interaction.guild.roles
       .fetch()
       .then((roles: Collection<String, Role>) => {
         for (const role of roles.values()) {
           if (role.name === "10 Mans") {
-            return role.id;
+            return role;
           }
         }
       })
       .catch(console.error);
 
-    if (!roleId) {
+    if (!tenmansRole) {
       this.interaction.reply({
         content:
           "My camera is destroyed - cannot find a 10 mans role on this server. Message an admin.",
@@ -186,7 +186,7 @@ class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
       });
 
       await queueChannel.send({
-        content: `<@${roleId}> that Radianite must be ours! A queue has been created!`,
+        content: `<@${tenmansRole.name}> that Radianite must be ours! A queue has been created!`,
       });
 
       return false;
