@@ -176,7 +176,7 @@ class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
 
     if (tenmansQueue.length >= botConfig.minVoteCount) {
       // Generate proper interactable queue once min votes reached
-      await activeVoteMessage.delete();
+      await activeVoteMessage?.delete();
       voteClosingTime = null;
       activeVoteMessage = null;
 
