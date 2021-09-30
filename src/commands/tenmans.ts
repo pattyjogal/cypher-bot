@@ -293,6 +293,7 @@ class TenmansCloseSubcommand extends MessageExecutable<CommandInteraction> {
     // Teardown - clear current queue
     tenmansQueue = [];
     await activeTenmansMessage?.delete();
+    activeTenmansMessage = null;
   }
 }
 
@@ -495,6 +496,7 @@ export async function handleVoteCleaning() {
     // Close vote if it has expired
     if (voteClosingTime < new Date()) {
       await activeVoteMessage.delete();
+      activeVoteMessage = null;
 
       tenmansQueue = [];
       voteClosingTime = null;
