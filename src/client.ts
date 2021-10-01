@@ -1,10 +1,9 @@
 import { Client, Intents } from "discord.js";
-import { config } from "dotenv";
 import { Db } from "mongodb";
 
 import cmd_register from "./commands/register";
 import {
-  cmd_tenmans,
+  cmdTenmans,
   handleButton as tenmansHandleButton,
   handleVoteCleaning,
 } from "./commands/tenmans";
@@ -19,8 +18,7 @@ async function initBotConfig(client: Client, db: Db) {
 
   if (!botConfigDoc) {
     // Persist default configuration data
-    const defaultChannelId =
-      process.env.DEFAULT_QUEUEMSG_CHANNELID;
+    const defaultChannelId = process.env.DEFAULT_QUEUEMSG_CHANNELID;
     const minVoteCount = process.env.MIN_VOTE_COUNT;
     const hoursTillVoteClose = process.env.HOURS_TO_CLOSE;
 
@@ -41,7 +39,7 @@ async function initBotConfig(client: Client, db: Db) {
   setInterval(handleVoteCleaning, 300000); // Clean vote embeds every 5 minutes
 }
 
-export default (db: Db) => {
+export default (db: Db): Client => {
   const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
   client.on("ready", async () => {
@@ -56,7 +54,7 @@ export default (db: Db) => {
     if (interaction.isCommand()) {
       const actions = {
         register: cmd_register,
-        tenmans: cmd_tenmans,
+        tenmans: cmdTenmans,
         config: cmdConfig,
       };
 
