@@ -186,7 +186,7 @@ class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
       });
 
       await queueChannel.send({
-        content: `<@${tenmansRole.name}> that Radianite must be ours! A queue has been created!`,
+        content: `<@&${tenmansRole.id}> that Radianite must be ours! A queue has been created!`,
       });
 
       return false;
