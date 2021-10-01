@@ -99,7 +99,11 @@ abstract class VoteQueueAction<
 
 class JoinQueueButtonAction extends StandardQueueAction<ButtonInteraction> {
   async updateQueue(): Promise<boolean> {
-    if (tenmansQueue.some(queueUser => this.user.discordId === queueUser.discordId)) {
+    if (
+      tenmansQueue.some(
+        (queueUser) => this.user.discordId === queueUser.discordId
+      )
+    ) {
       this.interaction.reply({
         content: "Who are you? Copy of me?! You're already in the queue!",
         ephemeral: true,
@@ -158,7 +162,11 @@ class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
       return false;
     }
 
-    if (tenmansQueue.some(queueUser => this.user.discordId === queueUser.discordId)) {
+    if (
+      tenmansQueue.some(
+        (queueUser) => this.user.discordId === queueUser.discordId
+      )
+    ) {
       this.interaction.reply({
         content: "Who are you? Copy of me?! You've already voted!",
         ephemeral: true,
@@ -176,18 +184,22 @@ class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
 
     if (tenmansQueue.length >= botConfig.minVoteCount) {
       // Generate proper interactable queue once min votes reached
-      await activeVoteMessage?.delete();
-      voteClosingTime = null;
-      activeVoteMessage = null;
+      try {
+        await activeVoteMessage?.delete();
+        voteClosingTime = null;
+        activeVoteMessage = null;
 
-      activeTenmansMessage = await queueChannel.send({
-        embeds: [createEmbed(time)],
-        components: [createQueueActionRow(this.queueId)],
-      });
+        activeTenmansMessage = await queueChannel.send({
+          embeds: [createEmbed(time)],
+          components: [createQueueActionRow(this.queueId)],
+        });
 
-      await queueChannel.send({
-        content: `<@${roleId}> that Radianite must be ours! A queue has been created!`,
-      });
+        await queueChannel.send({
+          content: `<@${roleId}> that Radianite must be ours! A queue has been created!`,
+        });
+      } catch (e) {
+        console.error(e);
+      }
 
       return false;
     }
@@ -292,8 +304,12 @@ class TenmansCloseSubcommand extends MessageExecutable<CommandInteraction> {
 
     // Teardown - clear current queue
     tenmansQueue = [];
-    await activeTenmansMessage?.delete();
-    activeTenmansMessage = null;
+    try {
+      await activeTenmansMessage?.delete();
+      activeTenmansMessage = null;
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 
@@ -343,9 +359,7 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
 
       const votesStillNeeded = botConfig.minVoteCount - tenmansQueue.length;
       activeVoteMessage = await queueChannel.send({
-        embeds: [
-          createVoteEmbed(votesStillNeeded, time, voteClosingTime),
-        ],
+        embeds: [createVoteEmbed(votesStillNeeded, time, voteClosingTime)],
         components: [createVoteQueueActionRow(queueId)],
       });
 
@@ -495,8 +509,12 @@ export async function handleVoteCleaning() {
   if (activeVoteMessage) {
     // Close vote if it has expired
     if (voteClosingTime < new Date()) {
-      await activeVoteMessage.delete();
-      activeVoteMessage = null;
+      try {
+        await activeVoteMessage?.delete();
+        activeVoteMessage = null;
+      } catch (e) {
+        console.error(e);
+      }
 
       tenmansQueue = [];
       voteClosingTime = null;
