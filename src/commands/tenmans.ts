@@ -74,7 +74,8 @@ abstract class StandardQueueAction<
     }
   }
 
-  updateUserInterface() {
+  async updateUserInterface() {
+    fetchQueueUsers();
     activeTenmansMessage.edit({
       embeds: [createEmbed(time)],
     });
@@ -88,9 +89,10 @@ abstract class VoteQueueAction<
     return "";
   }
 
-  updateUserInterface() {
+  async updateUserInterface() {
     const votesStillNeeded = botConfig.minVoteCount - tenmansQueue.length;
 
+    fetchQueueUsers();
     activeVoteMessage.edit({
       embeds: [createVoteEmbed(votesStillNeeded, time, voteClosingTime)],
     });
@@ -180,6 +182,7 @@ class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
       voteClosingTime = null;
       activeVoteMessage = null;
 
+      fetchQueueUsers();
       activeTenmansMessage = await queueChannel.send({
         embeds: [createEmbed(time)],
         components: [createQueueActionRow(this.queueId)],
@@ -262,6 +265,7 @@ class SubcommandTenmansStart extends MessageExecutable<CommandInteraction> {
 
     const queueId = "stub";
 
+    fetchQueueUsers();
     activeTenmansMessage = await queueChannel.send({
       embeds: [createEmbed(time)],
       components: [createQueueActionRow(queueId)],
@@ -341,6 +345,7 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
       const queueId = "stub";
 
       const votesStillNeeded = botConfig.minVoteCount - tenmansQueue.length;
+      fetchQueueUsers();
       activeVoteMessage = await queueChannel.send({
         embeds: [
           createVoteEmbed(votesStillNeeded, time, voteClosingTime),
@@ -425,6 +430,18 @@ export async function handleButton(interaction: ButtonInteraction, db: Db) {
   }
   const command = new Action(interaction, db, queueId);
   command.execute();
+}
+
+async function fetchQueueUsers() {
+  // Fetch user data in batch so that mobile clients will cache (?)
+  const queuedUserIds = tenmansQueue.map(memberData => memberData.discordId)
+
+  await this.interaction.guild.members.fetch({
+    user: queuedUserIds,
+    force: true, // TODO: Test using false flag if it solves invalid-user bug
+  })
+  .then(() => { console.log("Users fetched before re-rendering embed."); })
+  .catch(console.error);
 }
 
 // TODO: Move embed generators into their own directory/module
