@@ -22,7 +22,7 @@ import {
 } from "./command";
 
 let tenmansQueue: Member[] = [];
-let time: String | null;
+let time: string | null;
 let activeTenmansMessage: Message | null;
 let activeVoteMessage: Message | null;
 let voteClosingTime: Date | null;
@@ -46,7 +46,7 @@ abstract class BaseQueueAction<
   /// like updating related embed messages, etc.
   abstract updateUserInterface();
 
-  async afterUserExecute(): Promise<any> {
+  async afterUserExecute(): Promise<void> {
     const errorMessage = this.verifyQueueId();
     if (errorMessage) {
       this.interaction.reply({
@@ -101,7 +101,11 @@ abstract class VoteQueueAction<
 
 class JoinQueueButtonAction extends StandardQueueAction<ButtonInteraction> {
   async updateQueue(): Promise<boolean> {
-    if (tenmansQueue.some(queueUser => this.user.discordId === queueUser.discordId)) {
+    if (
+      tenmansQueue.some(
+        (queueUser) => this.user.discordId === queueUser.discordId
+      )
+    ) {
       this.interaction.reply({
         content: "Who are you? Copy of me?! You're already in the queue!",
         ephemeral: true,
@@ -141,7 +145,7 @@ class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
     // Verify that a pingable role exists for 10 mans on this server
     const roleId = await this.interaction.guild.roles
       .fetch()
-      .then((roles: Collection<String, Role>) => {
+      .then((roles: Collection<string, Role>) => {
         for (const role of roles.values()) {
           if (role.name === "10 Mans") {
             return role.id;
@@ -160,7 +164,11 @@ class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
       return false;
     }
 
-    if (tenmansQueue.some(queueUser => this.user.discordId === queueUser.discordId)) {
+    if (
+      tenmansQueue.some(
+        (queueUser) => this.user.discordId === queueUser.discordId
+      )
+    ) {
       this.interaction.reply({
         content: "Who are you? Copy of me?! You've already voted!",
         ephemeral: true,
@@ -178,19 +186,23 @@ class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
 
     if (tenmansQueue.length >= botConfig.minVoteCount) {
       // Generate proper interactable queue once min votes reached
-      await activeVoteMessage.delete();
-      voteClosingTime = null;
-      activeVoteMessage = null;
+      try {
+        await activeVoteMessage?.delete();
+        voteClosingTime = null;
+        activeVoteMessage = null;
 
-      fetchQueueUsers();
-      activeTenmansMessage = await queueChannel.send({
-        embeds: [createEmbed(time)],
-        components: [createQueueActionRow(this.queueId)],
-      });
+        fetchQueueUsers();
+        activeTenmansMessage = await queueChannel.send({
+          embeds: [createEmbed(time)],
+          components: [createQueueActionRow(this.queueId)],
+        });
 
-      await queueChannel.send({
-        content: `<@${roleId}> that Radianite must be ours! A queue has been created!`,
-      });
+        await queueChannel.send({
+          content: `<@${roleId}> that Radianite must be ours! A queue has been created!`,
+        });
+      } catch (e) {
+        console.error(e);
+      }
 
       return false;
     }
@@ -234,15 +246,15 @@ class ManualRemoveUserToQueue extends StandardQueueAction<CommandInteraction> {
 }
 
 class SubcommandTenmansStart extends MessageExecutable<CommandInteraction> {
-  async execute(): Promise<any> {
-    const interaction_user = this.interaction.user;
+  async execute(): Promise<void> {
+    const interactionUser = this.interaction.user;
     const role = this.interaction.guild.roles.cache.find(
       (role) => role.name === "Admin"
     );
 
     if (
       !this.interaction.guild.members.cache
-        .get(interaction_user.id)
+        .get(interactionUser.id)
         .roles.cache.has(role.id)
     ) {
       this.interaction.reply({
@@ -274,16 +286,16 @@ class SubcommandTenmansStart extends MessageExecutable<CommandInteraction> {
 }
 
 class TenmansCloseSubcommand extends MessageExecutable<CommandInteraction> {
-  async execute(): Promise<any> {
+  async execute(): Promise<void> {
     // Verify privilege
-    const interaction_user = this.interaction.user;
+    const interactionUser = this.interaction.user;
     const role = this.interaction.guild.roles.cache.find(
       (role) => role.name === "Admin"
     );
 
     if (
       !this.interaction.guild.members.cache
-        .get(interaction_user.id)
+        .get(interactionUser.id)
         .roles.cache.has(role.id)
     ) {
       this.interaction.reply({
@@ -296,7 +308,12 @@ class TenmansCloseSubcommand extends MessageExecutable<CommandInteraction> {
 
     // Teardown - clear current queue
     tenmansQueue = [];
-    await activeTenmansMessage?.delete();
+    try {
+      await activeTenmansMessage?.delete();
+      activeTenmansMessage = null;
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 
@@ -347,9 +364,7 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
       const votesStillNeeded = botConfig.minVoteCount - tenmansQueue.length;
       fetchQueueUsers();
       activeVoteMessage = await queueChannel.send({
-        embeds: [
-          createVoteEmbed(votesStillNeeded, time, voteClosingTime),
-        ],
+        embeds: [createVoteEmbed(votesStillNeeded, time, voteClosingTime)],
         components: [createVoteQueueActionRow(queueId)],
       });
 
@@ -368,7 +383,10 @@ class TenmansVoteSubcommand extends RegisteredUserExecutable<CommandInteraction>
   }
 }
 
-export async function cmd_tenmans(interaction: CommandInteraction, db: Db) {
+export async function cmdTenmans(
+  interaction: CommandInteraction,
+  db: Db
+): Promise<void> {
   const commands: {
     [key: string]: {
       new (
@@ -403,7 +421,10 @@ export async function cmd_tenmans(interaction: CommandInteraction, db: Db) {
   command.execute();
 }
 
-export async function handleButton(interaction: ButtonInteraction, db: Db) {
+export async function handleButton(
+  interaction: ButtonInteraction,
+  db: Db
+): Promise<void> {
   const commands: {
     [key: string]: {
       new (
@@ -507,11 +528,16 @@ const createVoteQueueActionRow = (queueId) => {
   );
 };
 
-export async function handleVoteCleaning() {
+export async function handleVoteCleaning(): Promise<void> {
   if (activeVoteMessage) {
     // Close vote if it has expired
     if (voteClosingTime < new Date()) {
-      await activeVoteMessage.delete();
+      try {
+        await activeVoteMessage?.delete();
+        activeVoteMessage = null;
+      } catch (e) {
+        console.error(e);
+      }
 
       tenmansQueue = [];
       voteClosingTime = null;
