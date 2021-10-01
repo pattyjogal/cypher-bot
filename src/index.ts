@@ -170,13 +170,13 @@ const rest = new REST({ version: "9" }).setToken(process.env.CYPHERBOT_TOKEN);
     console.error(error);
   }
 
-  const db = await setupDB();
+  const db = await setupDb();
 
   client(db).login(process.env.CYPHERBOT_TOKEN);
 })();
 
 // DB Setup
-async function setupDB() {
+async function setupDb() {
   const client = await MongoClient.connect(process.env.DB_CONN_STRING, {
     ignoreUndefined: true,
   });

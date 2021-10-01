@@ -1,4 +1,4 @@
-import { CommandInteraction, Message } from "discord.js";
+import { CommandInteraction } from "discord.js";
 import { Db } from "mongodb";
 
 import { MessageExecutable } from "./command";
@@ -12,7 +12,7 @@ class NewUserSubcommand extends MessageExecutable<CommandInteraction> {
         });
 
         // Exit if data for a user already exists
-        if (!!existingUser) {
+        if (existingUser) {
             this.interaction.reply({
                 content:
                     "I already know **exactly** who you are. No need to register again, my friend!",
@@ -86,7 +86,7 @@ class UpdateUserSubcommand extends MessageExecutable<CommandInteraction> {
     }
 }
 
-function cmd_register(interaction, db: Db) {
+function cmdRegister(interaction: CommandInteraction, db: Db): void {
     const commands = {
         "new": NewUserSubcommand,
         "update": UpdateUserSubcommand
@@ -97,4 +97,4 @@ function cmd_register(interaction, db: Db) {
     subcmd.execute();
 }
 
-export default cmd_register;
+export default cmdRegister;
