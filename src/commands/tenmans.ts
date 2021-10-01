@@ -185,8 +185,7 @@ class VoteQueueButtonAction extends VoteQueueAction<ButtonInteraction> {
     if (tenmansQueue.length >= botConfig.minVoteCount) {
       // Generate proper interactable queue once min votes reached
       try {
-        await activeVoteMessage.delete();
-
+        await activeVoteMessage?.delete();
         voteClosingTime = null;
         activeVoteMessage = null;
 
@@ -307,6 +306,7 @@ class TenmansCloseSubcommand extends MessageExecutable<CommandInteraction> {
     tenmansQueue = [];
     try {
       await activeTenmansMessage?.delete();
+      activeTenmansMessage = null;
     } catch (e) {
       console.error(e);
     }
@@ -510,7 +510,8 @@ export async function handleVoteCleaning() {
     // Close vote if it has expired
     if (voteClosingTime < new Date()) {
       try {
-        await activeVoteMessage.delete();
+        await activeVoteMessage?.delete();
+        activeVoteMessage = null;
       } catch (e) {
         console.error(e);
       }
