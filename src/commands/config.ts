@@ -6,14 +6,14 @@ import botConfig from "../config/botConfig";
 
 class DefaultChannelSubcommand extends MessageExecutable<CommandInteraction> {
   async execute() {
-    const interaction_user = this.interaction.user;
+    const interactionUser = this.interaction.user;
     const role = this.interaction.guild.roles.cache.find(
       (role) => role.name === "Admin"
     );
 
     if (
       !this.interaction.guild.members.cache
-        .get(interaction_user.id)
+        .get(interactionUser.id)
         .roles.cache.has(role.id)
     ) {
       this.interaction.reply({
@@ -54,7 +54,7 @@ class DefaultChannelSubcommand extends MessageExecutable<CommandInteraction> {
   }
 }
 
-export async function cmdConfig(interaction, db: Db) {
+export async function cmdConfig(interaction: CommandInteraction, db: Db): Promise<void> {
   const commands: {
     [key: string]: {
       new (

@@ -12,7 +12,7 @@ export type RepliableInteraction =
 export abstract class MessageExecutable<T extends RepliableInteraction> {
   constructor(protected interaction: T, protected db: Db) {}
 
-  abstract execute(): Promise<any>;
+  abstract execute(): Promise<void>;
 }
 
 export abstract class RegisteredUserExecutable<
@@ -20,7 +20,7 @@ export abstract class RegisteredUserExecutable<
 > extends MessageExecutable<T> {
   protected user: Member;
 
-  async execute(): Promise<any> {
+  async execute(): Promise<void> {
     const user = (await this.db.collection("members").findOne({
       discordId: this.interaction.user.id,
     })) as Member;
@@ -39,5 +39,5 @@ export abstract class RegisteredUserExecutable<
     this.afterUserExecute();
   }
 
-  abstract afterUserExecute(): Promise<any>;
+  abstract afterUserExecute(): Promise<void>;
 }
