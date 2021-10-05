@@ -392,7 +392,7 @@ export async function cmdTenmans(
     };
   } = {
     start: SubcommandTenmansStart,
-    end: TenmansCloseSubcommand,
+    close: TenmansCloseSubcommand,
     vote: TenmansVoteSubcommand,
     add_user: ManualAddUserToQueue,
     remove_user: ManualRemoveUserToQueue,
